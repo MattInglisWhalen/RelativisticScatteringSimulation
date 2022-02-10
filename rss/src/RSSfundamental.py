@@ -64,8 +64,6 @@ class Fundamental(object):
         """
         Default destructor isn't sufficient since the image stays in the scene
         """
-        if self.name != "Tachyon" :
-            print(f"Deleting {self.name}")
         self._image.visible = 0
 
     @property
@@ -211,8 +209,8 @@ class Fundamental(object):
     Collision handling
     """
     def collidable_with(self,other):
-        collidable_list = ["Lepton","Quark"]
-        if self.name in collidable_list and other.name in collidable_list :
+        collidable_list = ["Lepto","Quark"]
+        if self.name[0:5] in collidable_list and other.name[0:5] in collidable_list :
             return True
         return False
     def are_collided(self, other ):
@@ -370,7 +368,7 @@ class Fundamental(object):
         # which gives a lifetime tau = 1/M
         if random() < ( 1 - exp( -self.M*dt ) ) :
 
-            lepton_branching_fraction = 0.5
+            lepton_branching_fraction = 0.1
 
             # boost rest frame of the virtual CoM frame, net 3 momenta there should be zero
             boosted_CoM_p = self.p.boosted_to_rest_frame_of( self.p )
@@ -440,7 +438,7 @@ class Fundamental(object):
                                       direction = boosted_decay2.boosted_away_with_momentum( self.p ).dir,
                                       mass = daughter_mass )
 
-            print(f"\n ~Decaying~~{self.name} to {daughter1} and {daughter2}" )
+            print(f"\n{self.name} ~Decaying~~ to {daughter1} and {daughter2}" )
             parent_plus_decay_pair.append( (self,daughter1,daughter2) )
 
         return parent_plus_decay_pair

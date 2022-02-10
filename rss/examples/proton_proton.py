@@ -1,9 +1,5 @@
 
-# external libs
-from vpython import *
-
 # internal classes
-from rss.src.RSSvectors import *
 from rss.src.RSSsystem import System
 from rss.src.RSSfundamental import *
 
