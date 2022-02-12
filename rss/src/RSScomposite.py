@@ -1,8 +1,6 @@
 
 # external libs
-# from vpython import *
 import numpy as np
-
 
 # internal classes
 from rss.src.RSSvectors import *

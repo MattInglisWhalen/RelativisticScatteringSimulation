@@ -38,17 +38,15 @@ class System:
 
     # Class variables
     #
-    # composites[] -- Composite particles which contain a collection of Fundamentals
-    # fundamentals[] -- A list of fundamental particles, not including the constituents of the composites
-    # virtuals[] -- Also a list of Fundamentals, but it's useful to keep them separate
-    # initial collision energy
+    # composites[] -- Composite particles which contain a collection of Quarks
+    # fundamentals[] -- A list of Fundamental particles (leptons), not including the constituents of the composites
+    # virtuals[] -- A list of Fundamentals containing annihilation products
+    #
+    # collidable_composites[] -- A secondary list to speed up calculations which can ignore non-collidable composites
 
     # Class Methods
-    # __init__ , __repr__
-    #
-    # boost_to_collision_energy()
-    # handle_annihilations()
-    #
+    # __init__ , __repr__ , __del__
+
 
     def __init__(self, mode="fundamental-fundamental", initial_energy=1):
 
@@ -64,16 +62,16 @@ class System:
         if mode == "lepton-lepton":
             self.fundamentals.append(Fundamental(name="Lepton1",
                                                  # ID=self.maxID+1, # TODO think if IDs are useful
-                                                 pos=Vec3(const.LEPTON_MASS*random()/2,
-                                                          const.LEPTON_MASS*random()/2,
+                                                 pos=Vec3(const.LEPTON_MASS*random()/4,
+                                                          const.LEPTON_MASS*random()/4,
                                                           -starting_distance),
                                                  energy=energy_each,
                                                  direction=Vec3(0, 0, 1),
                                                  )
                                      )
             self.fundamentals.append(Fundamental(name="Lepton2",
-                                                 pos=Vec3(const.LEPTON_MASS*random()/2,
-                                                          const.LEPTON_MASS*random()/2,
+                                                 pos=Vec3(const.LEPTON_MASS*random()/4,
+                                                          const.LEPTON_MASS*random()/4,
                                                           starting_distance),
                                                  energy=energy_each,
                                                  direction=Vec3(0, 0, -1),
@@ -81,16 +79,16 @@ class System:
                                      )
         elif mode == "lepton-proton":
             self.fundamentals.append(Fundamental(name="Lepton",
-                                                 pos=Vec3(const.LEPTON_MASS*random()/2,
-                                                          const.LEPTON_MASS*random()/2,
+                                                 pos=Vec3(const.LEPTON_MASS*random()/4,
+                                                          const.LEPTON_MASS*random()/4,
                                                           -starting_distance),
                                                  energy=energy_each,
                                                  direction=Vec3(0, 0, 1),
                                                  )
                                      )
             self.composites.append(Composite(name="Proton",
-                                             pos=Vec3(const.PROTON_MASS*random()/5,
-                                                      const.PROTON_MASS*random()/5,
+                                             pos=Vec3(const.PROTON_MASS*random()/40,
+                                                      const.PROTON_MASS*random()/40,
                                                       starting_distance),
                                              energy=energy_each,
                                              direction=Vec3(0, 0, -1),
@@ -98,16 +96,16 @@ class System:
                                    )
         elif mode == "proton-lepton":
             self.composites.append(Composite(name="Proton",
-                                             pos=Vec3(const.PROTON_MASS*random()/5,
-                                                      const.PROTON_MASS*random()/5,
+                                             pos=Vec3(const.PROTON_MASS*random()/40,
+                                                      const.PROTON_MASS*random()/40,
                                                       -starting_distance),
                                              energy=energy_each,
                                              direction=Vec3(0, 0, 1),
                                              )
                                    )
             self.fundamentals.append(Fundamental(name="Lepton",
-                                                 pos=Vec3(const.LEPTON_MASS*random()/2,
-                                                          const.LEPTON_MASS*random()/2,
+                                                 pos=Vec3(const.LEPTON_MASS*random()/4,
+                                                          const.LEPTON_MASS*random()/4,
                                                           starting_distance),
                                                  energy=energy_each,
                                                  direction=Vec3(0, 0, -1),
@@ -116,23 +114,22 @@ class System:
 
         else:  # (mode == "proton-proton")
             self.composites.append(Composite(name="Proton1",
-                                             pos=Vec3(const.PROTON_MASS*random()/50,
-                                                      const.PROTON_MASS*random()/50,
+                                             pos=Vec3(const.PROTON_MASS*random()/40,
+                                                      const.PROTON_MASS*random()/40,
                                                       -starting_distance),
                                              energy=energy_each,
                                              direction=Vec3(0, 0, 1),
                                              )
                                    )
             self.composites.append(Composite(name="Proton2",
-                                             pos=Vec3(const.PROTON_MASS*random()/50,
-                                                      const.PROTON_MASS*random()/50,
+                                             pos=Vec3(const.PROTON_MASS*random()/40,
+                                                      const.PROTON_MASS*random()/40,
                                                       starting_distance),
                                              energy=energy_each,
                                              direction=Vec3(0, 0, -1),
                                              )
                                    )
-        self.num_fundamentals = len(self.fundamentals)
-        self.num_composites = len(self.composites)
+
         self.collidable_composites.extend( self.composites )
 
     def __repr__(self):
@@ -140,8 +137,8 @@ class System:
         Returns the string representation of the system
         """
         returnString = " == System stats ==\n"
-        returnString += "Net mass : " + str(self.invariant_mass)
-        returnString += "\nNet momentum : " + str(self.net_mom) + "\n"
+        returnString += "Net mass : " + str(self.invariant_mass())
+        returnString += "\nNet momentum : " + str(self.net_mom()) + "\n"
         for ifund in self.fundamentals:
             returnString += str(ifund) + "\n"
         for icomp in self.composites:
@@ -152,25 +149,51 @@ class System:
             returnString += str(ivirt) + "\n"
         return returnString
 
+    def print(self):
+        print(repr(self))
+
+    """
+    Diagnostic functions
+    """
+    def net_mom(self):
+        all_sum = Mom4(0,0,0,0)
+        for ifund in self.fundamentals :
+            all_sum += ifund.p
+        for icomp in self.composites :
+            all_sum += icomp.net_mom
+        for ivirt in self.virtuals :
+            all_sum += ivirt.p
+        return all_sum
+    def invariant_mass(self):
+        return sqrt(self.net_mom()*self.net_mom())
+
+    """
+    Utility functions
+    """
+
     def safe_remove(self, other):
         # can probably speed this up later with class type-checks
         if isinstance(other, Fundamental) :
             for ifund in self.fundamentals[:] :
                 if ifund == other :
+                    ifund.image.visible = 0  # garbage collection should handle this but the last out of a list fails
                     self.fundamentals.remove(ifund)
                     break
             for icomp in self.composites :
                 for ifund in icomp.constituents[:] :
                     if ifund == other :
+                        ifund.image.visible = 0
                         icomp.safe_remove(ifund)
                         break
             for icomp in self.collidable_composites :
                 for ifund in icomp.constituents[:]:
                     if ifund == other :
+                        ifund.image.visible = 0
                         icomp.safe_remove(ifund)
                         break
             for ivirt in self.virtuals[:] :
                 if ivirt == other :
+                    ivirt.image.visible = 0
                     self.virtuals.remove(ivirt)
                     break
         elif isinstance(other, Composite):
@@ -183,22 +206,9 @@ class System:
                     self.collidable_composites.remove(icomp)
                     break
 
-    def print(self):
-        print(repr(self))
-
-    @property
-    def net_mom(self):
-        all_sum = Mom4(0,0,0,0)
-        for ifund in self.fundamentals :
-            all_sum += ifund.p
-        for icomp in self.composites :
-            all_sum += icomp.net_mom
-        for ivirt in self.virtuals :
-            all_sum += ivirt.p
-        return all_sum
-    @property
-    def invariant_mass(self):
-        return sqrt(self.net_mom*self.net_mom)
+    """
+    Initial state preparation
+    """
 
     def boost_to_collision_energy(self, CoM_energy = 10 ):
         print("\n\n  ====> <====  Boosting to collision energy \n\n")
@@ -210,7 +220,35 @@ class System:
             icomp.E = energy_each
             icomp.translate_constituents_to_lab_frame()
 
-    def handle_annihilations( self , annihilation_pairs = [] ):
+    """
+    Collision Handling
+    """
+
+    def possible_scatterers_off_fundamental(self, ifund):
+
+        others = []
+        for iother in self.fundamentals:
+            if iother != ifund:
+                others.append(iother)
+        for iother in self.collidable_composites:
+            others.extend(iother.constituents)
+        return others
+
+    def possible_scatterers_off_composite(self, icomp):
+
+        others = []
+        for iother in self.fundamentals:
+            others.append(iother)
+        for iother in self.collidable_composites :
+            if iother != icomp:  # only consider inter-composite collisions
+                try:
+                    others.extend(iother.constituents)
+                except AttributeError:
+                    print(f"{iother} is not a composite. How did it get in that list?")
+        return others
+
+    # annihilating pairs come from Fundamental.get_fund_collision_pairs()
+    def finish_annihilations(self, annihilation_pairs = []):
 
         # creates a new virtual particle from each pair, and deletes
         # the associated parent particles from the relevant lists
@@ -241,6 +279,26 @@ class System:
             for icomp in self.composites :
                 icomp.recalculate_composite_properties()
 
+    # decay products come from Fundamental.get_decay_pairs()
+    def finish_decays(self, parent_plus_decay_pairs = []) :
+        for parent, daughter1, daughter2 in parent_plus_decay_pairs:
+            print("Cleaning up decay...",parent)
+            print("\t\t",daughter1)
+            print("\t\t",daughter2)
+
+            parent.image.visible = 0  # can't rely on garbage cleanup to get rid of the last in a list
+            self.safe_remove(parent)
+
+            if daughter1.name[0:6] == "Lepton" :
+                self.fundamentals.append(daughter1)
+                self.fundamentals.append(daughter2)
+            elif daughter1.name[0:3] == "Jet" :
+                self.virtuals.append(daughter1)
+                self.virtuals.append(daughter2)
+            else :  # Meson
+                self.composites.append(daughter1)
+                self.composites.append(daughter2)
+
     def find_owner(self, fund):
         owner = 0
         for ifund in self.fundamentals:
@@ -251,7 +309,7 @@ class System:
                 if ifund == fund:
                     owner = icomp
         return owner
-
+    # billiards pairs come from Fundamental.get_fund_collision_pairs()
     def handle_billiards_collisions(self, billiards_pairs) :
 
         # loop to do collisions, and then loop again to do recalculation of composite momentum
@@ -278,25 +336,9 @@ class System:
                 print(icomp.name)
                 icomp.recalculate_composite_properties()
 
-    def handle_decays(self, parent_plus_decay_pairs = [] ) :
-        for parent, daughter1, daughter2 in parent_plus_decay_pairs:
-            print("Cleaning up decay...",parent)
-            print("\t\t",daughter1)
-            print("\t\t",daughter2)
-
-            parent.image.visible = 0  # can't rely on garbage cleanup to get rid of the last in a list
-            self.safe_remove(parent)
-
-            if daughter1.name[0:6] == "Lepton" :
-                self.fundamentals.append(daughter1)
-                self.fundamentals.append(daughter2)
-            elif daughter1.name[0:3] == "Jet" :
-                self.virtuals.append(daughter1)
-                self.virtuals.append(daughter2)
-            else :  # Meson
-                self.composites.append(daughter1)
-                self.composites.append(daughter2)
-
+    """
+    Dealing with composites off their mass shell
+    """
     def break_energetic_springs(self):
         for icomp in self.composites :
             for ifund in icomp.billiards[:] :
@@ -328,6 +370,10 @@ class System:
 
                     # update self momentum
                     icomp.recalculate_composite_properties()
+
+    """
+    Further Cleanup of on-shell relations
+    """
 
     def nearest_composite_to(self, composite):
         new_nearest = composite
@@ -368,9 +414,8 @@ class System:
         wiggle_room_factor_low = 0.98
         wiggle_room_factor_high = 1.05
 
-
         # composites need to end up on-shell at the end of the experiment
-        for icomp in self.composites :
+        for icomp in self.composites[:] :
             correct_mass = const.MESON_MASS if icomp.name[0:5] == "Meson" else const.PROTON_MASS
             # low mass condition
             if icomp.M < correct_mass*wiggle_room_factor_low:
@@ -419,6 +464,9 @@ class System:
                     # print("Stole",energy_to_steal,"so now ",icomp,nearest)
             # awkward stage where a meson above its mass-shell but it can't decay to another meson
             elif icomp.name[0:5] == "Meson" and wiggle_room_factor_high*const.MESON_MASS < icomp.M < 2*const.MESON_MASS :
+                raise NotImplementedError
+                # the following doesn't work as intended. Use the above logic. But mesons are currently uncollidable
+                # so I'm not sure how we actually reached this point
                 print("\nHARD PART: Losing energy since", icomp.M ,">",wiggle_room_factor_high*const.MESON_MASS)
                 energy_to_lose = icomp.E - sqrt( correct_mass**2 + icomp.p3.mag2 )
                 # need to steal energy from a nearby composite to boost up the mass
@@ -432,7 +480,7 @@ class System:
                 # need to begin decaying to lower-mass hadronic states
                 icomp.offshell_counter += 1
                 if icomp.offshell_counter > 200 :  # time or position would be better
-                    print(f"Offshell {icomp} so now decaying")
+                    print(f"\nOffshell {icomp} so now decaying")
                     print(f"{len(scene.objects)} and {scene.objects}")
                     # generate a hadron jet from the off-shell composite
                     new_jet = Fundamental( name="Jet",
@@ -446,37 +494,10 @@ class System:
             # end if
         # end for
 
-    def potential_scatterers_of_fundamental(self,ifund):
-        others = []
-        for iother in self.fundamentals:
-            if iother != ifund:
-                others.append(iother)
-        for iother in self.collidable_composites:
-            others.extend(iother.constituents)
-        return others
-
-    def potential_scatterers_of_composite(self, icomp):
-        others = []
-
-        for iother in self.fundamentals:
-            others.append(iother)
-        for iother in self.collidable_composites :
-            if iother != icomp:  # only consider inter-composite collisions
-                try:
-                    others.extend(iother.constituents)
-                except AttributeError:
-                    print(iother,"is not a composite. How did it get in that list?")
-        return others
-
     def simulate_for(self, seconds=10):
 
         frames_per_second = 30
         dt_of_frame = 0.01
-
-        for i in range(100) :
-            self.composites[0].update_comp(dt=dt_of_frame)
-            self.composites[1].update_comp(dt=dt_of_frame)
-
 
         for iframe in range(0, floor(frames_per_second * seconds)):
 
@@ -492,7 +513,7 @@ class System:
                 # Forward timestep
                 ifund.update(dt=dt_of_frame, ps_forces = phasespace_forces)
                 # Need to know the positions of other fundamentals in order to apply collision logic
-                others = self.potential_scatterers_of_fundamental(ifund)
+                others = self.possible_scatterers_off_fundamental(ifund)
                 new_annihilation_pair, new_billiards_pair = ifund.get_fund_collision_pairs(other_fundamentals = others)
                 annihilation_pairs.extend( new_annihilation_pair )
                 billiards_pairs.extend( new_billiards_pair)
@@ -501,7 +522,7 @@ class System:
                 # Forward timestep
                 icomp.update_comp(dt=dt_of_frame)
                 # Collision detection and extraction
-                others = self.potential_scatterers_of_composite(icomp)
+                others = self.possible_scatterers_off_composite(icomp)
                 new_annihilation_pair, new_billiards_pair =  icomp.get_collision_pairs(other_fundamentals = others)
                 annihilation_pairs.extend( new_annihilation_pair )
                 billiards_pairs.extend( new_billiards_pair)
@@ -515,13 +536,13 @@ class System:
                 new_parent_plus_decay_pair = ivirt.get_decay_pairs(dt=dt_of_frame)
                 parent_plus_decay_pairs.extend( new_parent_plus_decay_pair )
 
-            self.handle_annihilations( annihilation_pairs )
+            self.finish_annihilations(annihilation_pairs)
             self.handle_billiards_collisions( billiards_pairs )
-            self.handle_decays( parent_plus_decay_pairs )
+            self.finish_decays(parent_plus_decay_pairs)
 
             # Billiards should no longer be part of a composite if binding energy exceeds some threshold
             # In such cases, a new composite is created from the spring's potential energy
             self.break_energetic_springs()
+
+            # Composites need to eventually have the correct mass
             self.return_composites_to_mass_shell()
-
-

@@ -3,13 +3,13 @@
 from vpython import *
 
 # internal classes
-from rss.src.RSSwrappers import Vec3
+from rss.src.RSSvectors import Vec3
 from rss.src.RSSsystem import System
 
 
 def lepton_lepton_collision():
 
-    scene.forward = Vec3(1,0,0)
+    scene.forward = vector(1,0,0)
     # Visualization settings
     scene.width = 1366
     scene.height = 768
@@ -17,6 +17,7 @@ def lepton_lepton_collision():
     scene.autoscale = 0
     # scene.center = vector(0, 8, 0)
     scene.background = color.black
+    beam_line = cylinder( pos = vector(0,0,-15), axis=vector(0,0,30), radius=0.005, color = color.yellow )
 
     # Simulation settings
     # thermalization_energy = 2.2
@@ -42,3 +43,4 @@ def hide_vpython_residuals( my_scene ):
 if __name__ == "__main__" :
 
     lepton_lepton_collision()
+    raise SystemExit
