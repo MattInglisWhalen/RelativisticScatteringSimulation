@@ -361,7 +361,10 @@ class Fundamental(object):
         return annihilation_pair, billiard_pair
 
     def get_decay_pairs(self, dt) :
-        assert( self.name == "Virtual" or self.name == "Jet" )
+        try:
+            assert( self.name == "Virtual" or self.name == "Jet" )
+        except AssertionError :
+            print(f"Problem parent is {self}")
 
         parent_plus_decay_pair = []
         # decay probability in time deltaT is p0 = 1 - exp( -M*deltaT )

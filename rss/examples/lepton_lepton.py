@@ -43,3 +43,4 @@ def hide_vpython_residuals( my_scene ):
 if __name__ == "__main__" :
 
     lepton_lepton_collision()
+    raise SystemExit

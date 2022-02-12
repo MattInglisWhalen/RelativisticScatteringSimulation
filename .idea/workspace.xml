@@ -2,36 +2,86 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ae603c59-7b50-45d4-b489-ddb7bb2cf908" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/rss/data/PDF_raw_data.db" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rss/data/plots/energy_distribution_at_E=100.0.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rss/data/plots/large_frac_distribution_at_E=100.0.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rss/data/plots/px_distribution_at_E=100.0.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rss/data/plots/py_distribution_at_E=100.0.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rss/data/plots/pz_distribution_at_E=100.0.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rss/data/plots/small_frac_distribution_at_E=100.0.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rss/examples/measure_truth_level_PDFs.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rss/src/RSSmeasurement_suite.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/rss/src/RSSsql.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rss/examples/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/rss/examples/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rss/examples/lepton_lepton.py" beforeDir="false" afterPath="$PROJECT_DIR$/rss/examples/lepton_lepton.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rss/examples/proton_proton.py" beforeDir="false" afterPath="$PROJECT_DIR$/rss/examples/proton_proton.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rss/src/RSScomposite.py" beforeDir="false" afterPath="$PROJECT_DIR$/rss/src/RSScomposite.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rss/src/RSSfundamental.py" beforeDir="false" afterPath="$PROJECT_DIR$/rss/src/RSSfundamental.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rss/src/RSSsystem.py" beforeDir="false" afterPath="$PROJECT_DIR$/rss/src/RSSsystem.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rss/src/RSSvectors.py" beforeDir="false" afterPath="$PROJECT_DIR$/rss/src/RSSvectors.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectId" id="24vsMNU34ye581CINPkH8Ue2c0o" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../../../Documents and Settings" />
   </component>
-  <component name="RunManager" selected="Python.lepton_lepton">
+  <component name="RunManager" selected="Python.proton_proton">
+    <configuration name="RSSmeasurement_suite" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="RelativisticScatteringSimulation" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/rss/src" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="C:\Users\Matt\Documents\GitHub\RelativisticScatteringSimulation\rss\src\RSSmeasurement_suite.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="lepton_lepton" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="RelativisticScatteringSimulation" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -45,6 +95,48 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rss/examples/lepton_lepton.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="RelativisticScatteringSimulation" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="measure_truth_level_PDFs" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="RelativisticScatteringSimulation" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/rss/examples" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rss/examples/measure_truth_level_PDFs.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -76,8 +168,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.lepton_lepton" />
         <item itemvalue="Python.proton_proton" />
+        <item itemvalue="Python.measure_truth_level_PDFs" />
+        <item itemvalue="Python.RSSmeasurement_suite" />
+        <item itemvalue="Python.main" />
+        <item itemvalue="Python.lepton_lepton" />
       </list>
     </recent_temporary>
   </component>
@@ -91,5 +186,19 @@
       <updated>1644522347707</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
   </component>
 </project>

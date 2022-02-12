@@ -160,6 +160,16 @@ class Mom4(Vec4):
         self[1] = p3abs * v3norm.x
         self[2] = p3abs * v3norm.y
         self[3] = p3abs * v3norm.z
+    @property
+    def pm(self):  # hat = zhat
+        n  = Mom4(1,0,0,1)
+        nb = Mom4(1,0,0,-1)
+        return self * nb
+    @property
+    def pp(self):
+        n  = (1,0,0,1)
+        nb = (1,0,0,-1)
+        return self * n
 
     @property
     def M2(self):

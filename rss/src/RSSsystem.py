@@ -87,8 +87,8 @@ class System:
                                                  )
                                      )
             self.composites.append(Composite(name="Proton",
-                                             pos=Vec3(const.PROTON_MASS*random()/4,
-                                                      const.PROTON_MASS*random()/4,
+                                             pos=Vec3(const.PROTON_MASS*random()/40,
+                                                      const.PROTON_MASS*random()/40,
                                                       starting_distance),
                                              energy=energy_each,
                                              direction=Vec3(0, 0, -1),
@@ -96,8 +96,8 @@ class System:
                                    )
         elif mode == "proton-lepton":
             self.composites.append(Composite(name="Proton",
-                                             pos=Vec3(const.PROTON_MASS*random()/4,
-                                                      const.PROTON_MASS*random()/4,
+                                             pos=Vec3(const.PROTON_MASS*random()/40,
+                                                      const.PROTON_MASS*random()/40,
                                                       -starting_distance),
                                              energy=energy_each,
                                              direction=Vec3(0, 0, 1),
@@ -114,16 +114,16 @@ class System:
 
         else:  # (mode == "proton-proton")
             self.composites.append(Composite(name="Proton1",
-                                             pos=Vec3(const.PROTON_MASS*random()/4,
-                                                      const.PROTON_MASS*random()/4,
+                                             pos=Vec3(const.PROTON_MASS*random()/40,
+                                                      const.PROTON_MASS*random()/40,
                                                       -starting_distance),
                                              energy=energy_each,
                                              direction=Vec3(0, 0, 1),
                                              )
                                    )
             self.composites.append(Composite(name="Proton2",
-                                             pos=Vec3(const.PROTON_MASS*random()/4,
-                                                      const.PROTON_MASS*random()/4,
+                                             pos=Vec3(const.PROTON_MASS*random()/40,
+                                                      const.PROTON_MASS*random()/40,
                                                       starting_distance),
                                              energy=energy_each,
                                              direction=Vec3(0, 0, -1),
@@ -165,7 +165,7 @@ class System:
             all_sum += ivirt.p
         return all_sum
     def invariant_mass(self):
-        return sqrt(self.net_mom*self.net_mom)
+        return sqrt(self.net_mom()*self.net_mom())
 
     """
     Utility functions
@@ -193,7 +193,7 @@ class System:
                         break
             for ivirt in self.virtuals[:] :
                 if ivirt == other :
-                    ifund.image.visible = 0
+                    ivirt.image.visible = 0
                     self.virtuals.remove(ivirt)
                     break
         elif isinstance(other, Composite):
@@ -205,7 +205,6 @@ class System:
                 if icomp == other:
                     self.collidable_composites.remove(icomp)
                     break
-
 
     """
     Initial state preparation
@@ -245,7 +244,7 @@ class System:
                 try:
                     others.extend(iother.constituents)
                 except AttributeError:
-                    print(iother,"is not a composite. How did it get in that list?")
+                    print(f"{iother} is not a composite. How did it get in that list?")
         return others
 
     # annihilating pairs come from Fundamental.get_fund_collision_pairs()
@@ -415,9 +414,8 @@ class System:
         wiggle_room_factor_low = 0.98
         wiggle_room_factor_high = 1.05
 
-
         # composites need to end up on-shell at the end of the experiment
-        for icomp in self.composites :
+        for icomp in self.composites[:] :
             correct_mass = const.MESON_MASS if icomp.name[0:5] == "Meson" else const.PROTON_MASS
             # low mass condition
             if icomp.M < correct_mass*wiggle_room_factor_low:
@@ -466,6 +464,9 @@ class System:
                     # print("Stole",energy_to_steal,"so now ",icomp,nearest)
             # awkward stage where a meson above its mass-shell but it can't decay to another meson
             elif icomp.name[0:5] == "Meson" and wiggle_room_factor_high*const.MESON_MASS < icomp.M < 2*const.MESON_MASS :
+                raise NotImplementedError
+                # the following doesn't work as intended. Use the above logic. But mesons are currently uncollidable
+                # so I'm not sure how we actually reached this point
                 print("\nHARD PART: Losing energy since", icomp.M ,">",wiggle_room_factor_high*const.MESON_MASS)
                 energy_to_lose = icomp.E - sqrt( correct_mass**2 + icomp.p3.mag2 )
                 # need to steal energy from a nearby composite to boost up the mass
@@ -479,7 +480,7 @@ class System:
                 # need to begin decaying to lower-mass hadronic states
                 icomp.offshell_counter += 1
                 if icomp.offshell_counter > 200 :  # time or position would be better
-                    print(f"Offshell {icomp} so now decaying")
+                    print(f"\nOffshell {icomp} so now decaying")
                     print(f"{len(scene.objects)} and {scene.objects}")
                     # generate a hadron jet from the off-shell composite
                     new_jet = Fundamental( name="Jet",
