@@ -38,26 +38,29 @@ class Squirrel:
         return self._db_location
 
 
-    def add_row_to_database(self, proton_energy, E, px, py, pz, pnb_frac, pn_frac):
+    def add_row_to_database(self, proton_energy, thermalization_time,E, px, py, pz, pnb_frac, pn_frac):
         sql_statement_string = f"""
             INSERT INTO truths 
                 (proton_energy, energy, px, py, pz, frac_large, frac_small)
             VALUES
-                ({proton_energy},{E},{px},{py},{pz},{pnb_frac},{pn_frac});
+                ({proton_energy},{thermalization_time},{E},{px},{py},{pz},{pnb_frac},{pn_frac});
         """
         self.cur.execute(sql_statement_string)
 
-    def add_rows_to_database(self, proton_energy_list = [], E_list = [], px_list = [], py_list = [], pz_list = [],
+    def add_rows_to_database(self, proton_energy_list = [], thermalization_time_list = [],
+                                E_list = [], px_list = [], py_list = [], pz_list = [],
                                 pnb_frac_list = [], pn_frac_list = []):
         for idx, _ in enumerate( E_list ) :
             sql_statement_string = f"""
                 INSERT INTO truths 
-                    (proton_energy, energy, px, py, pz, frac_large, frac_small)
+                    (proton_energy, therm_time, energy, px, py, pz, frac_large, frac_small)
                 VALUES
-                    ({proton_energy_list[idx]},{E_list[idx]},{px_list[idx]},{py_list[idx]},{pz_list[idx]},
+                    ({proton_energy_list[idx]},{thermalization_time_list[idx]},
+                        {E_list[idx]},{px_list[idx]},{py_list[idx]},{pz_list[idx]},
                         {pnb_frac_list[idx]},{pn_frac_list[idx]});
             """
             self.cur.execute(sql_statement_string)
+            self._connection.commit()
 
     def get_row_from_truths_with_id(self, ID):
         sql_statement_string = f"""
@@ -95,6 +98,7 @@ class Squirrel:
         sql_statement_string = f"""
                 CREATE TABLE IF NOT EXISTS {table}(id INTEGER PRIMARY KEY, 
                                                     proton_energy INTEGER, 
+                                                    therm_time FLOAT,                                                    
                                                     energy FLOAT, 
                                                     px FLOAT, 
                                                     py FLOAT, 

@@ -3,10 +3,9 @@
 from rss.src.RSSmeasurement_suite import *
 
 
-def measure_truth_PDFs():
+def measure_DIS_PDFs():
 
     suite = MeasurementSuite()
-    suite.create_table_named("truths")
 
     num_trials = 1
     show_plots = True
@@ -14,14 +13,14 @@ def measure_truth_PDFs():
     for i in range(num_trials) :
         if num_trials > 1 :
             show_plots = False
-        suite.measure_truth_level_parton_momenta_at_energy(100, show_new_data=show_plots)
+        suite.measure_parton_momenta_from_DIS_at_energy(100, show_new_data=show_plots)
         print(f"Done {i}")
-    suite.update_all_plots()
+    # suite.update_all_plots()
 
     print("Exiting...")
 
 
 if __name__ == "__main__" :
 
-    measure_truth_PDFs()
+    measure_DIS_PDFs()
     raise SystemExit

@@ -58,7 +58,12 @@ class Vec4:
         for i in range(0,4) :
             self[i] += other[i]
         return self
-
+    def __neg__(self):
+        """
+        -Vec4(self)
+        """
+        new_vec = self.__class__(-self[0], -self[1], -self[2], -self[3])
+        return new_vec
     def __sub__(self, other):
         """
         Vec4(self) - Vec4(other)
@@ -76,9 +81,18 @@ class Vec4:
     def __mul__(self, other):
         """
         Vec4(self) * Vec4(other)
+
+        No support for multiplication by a scalar -- overloading causes slowdown from branching logic.
+        Use / operator if absolutely required
         """
         scalar = self[0]*other[0] - self[1]*other[1] - self[2]*other[2] - self[3]*other[3]
         return scalar
+    def __truediv__(self, val):
+        """
+        Vec4(self) / scalar
+        """
+        new_vec = self.__class__(self[0]/val, self[1]/val, self[2]/val, self[3]/val)
+        return new_vec
 
     @property
     def invariant(self):

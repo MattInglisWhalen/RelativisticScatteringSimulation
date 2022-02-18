@@ -22,7 +22,7 @@ def proton_proton_collision():
     CoM_energy = 100
     collision_time = 30
 
-    scattering_system = System( mode = "composite-composite" , initial_energy = thermalization_energy )
+    scattering_system = System( mode = "proton-proton" , initial_energy = thermalization_energy )
     hide_vpython_residuals(scene)
     scattering_system.simulate_for( seconds = thermalization_time )
 

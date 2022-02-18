@@ -212,12 +212,18 @@ class System:
 
     def boost_to_collision_energy(self, CoM_energy = 10 ):
         print("\n\n  ====> <====  Boosting to collision energy \n\n")
-        energy_each = CoM_energy / 2
+
+        sum_sqr_masses = 0
         for ifund in self.fundamentals :
-            ifund.E = energy_each
+            sum_sqr_masses += ifund.M2
+        for icomp in self.composites :
+            sum_sqr_masses += icomp.M2
+
+        for ifund in self.fundamentals :
+            ifund.E = CoM_energy/(2 + (2*sum_sqr_masses-4*ifund.M2)/CoM_energy**2)  # a good approximation
         for icomp in self.composites :
             icomp.translate_constituents_to_rest_frame()
-            icomp.E = energy_each
+            icomp.E = CoM_energy/(2 + (2*sum_sqr_masses-4*icomp.M2)/CoM_energy**2)
             icomp.translate_constituents_to_lab_frame()
 
     """
@@ -319,6 +325,8 @@ class System:
             # find the owner of each fundamental in the pair -- the owner of a lepton fundamental is the lepton itself,
             # while the owner of a quark is the composite which contains it
             owners = self.find_owner(pair[0]), self.find_owner(pair[1])
+            moms_before = pair[0].p, pair[1].p
+            print(f"Truth-level momentum fractions: {pair[0].p.pm/owners[0].p.pm} and {pair[1].p.pm/owners[1].p.pm}")
             # change the momentum of each fundamental in an elastic collision
             pair[0].do_billiards_collision_with(pair[1])
             try:
@@ -328,6 +336,14 @@ class System:
                 print("How did an int get to be the owner??? Pair is {} and owners are {}/{}".format(pair,
                                                                                                      owners[0],
                                                                                                      owners[1]))
+            n_vec = (moms_before[0].p3 - pair[0].p3).hat
+            nmu = Mom4(1,0,0,1)
+            nbmu = Mom4(1,0,0,1)
+            nmu.dir = n_vec
+            nbmu.dir = -n_vec
+            print(f"But really x= {(moms_before[0]-pair[0].p)*nmu / (owners[0].p*nmu)} and {(moms_before[1]-pair[1].p)*nmu/ (owners[1].p*nmu)}")
+            print(f"Or is it x= {(moms_before[0]-pair[0].p)*nbmu / (owners[0].p*nbmu)} and {(moms_before[1]-pair[1].p)*nbmu/ (owners[1].p*nbmu)}")
+
             print(pair)
 
         for _ in billiards_pairs[0:1] :  # branchless if len(billiards_pairs) > 0
@@ -349,26 +365,46 @@ class System:
                     print("Because of mediator: ", icomp.dict_constituents_mediators[ifund])
                     print("and billiard: ", ifund.p)
 
-                    # take enough energy from the spring to create the meson, with the same momentum as
-                    # the quark that created the meson
-                    new_meson = Composite( name = "Meson::Uncollidable" ,
+                    # momentum if we take extract all the potential energy from the spring
+                    greedy_mom4 = icomp.dict_constituents_mediators[ifund].potential_energy_vector + ifund.p
+                    remnant_mom = icomp.p - greedy_mom4
+                    remnant_virtuality = remnant_mom*remnant_mom
+
+                    print(f"Greedy algo would give remnant virtuality {remnant_virtuality} from {remnant_mom}, with {greedy_mom4=}")
+
+                    if greedy_mom4*greedy_mom4 > (2*const.MESON_MASS)**2 and remnant_virtuality > 0 and greedy_mom4.E > 0:
+                        print("Being greedy")
+                        # can create a jet instead of a lonely meson
+                        new_jet = Fundamental( name = "Jet",
+                                               pos = ifund.r3,
+                                               energy = greedy_mom4.E,
+                                               direction = greedy_mom4.dir,
+                                               mass = greedy_mom4.M
+                                             )
+                        print(new_jet)
+                        self.virtuals.append(new_jet)
+                        # update the mediator to preserve energy
+                        icomp.dict_constituents_mediators[ifund].E = (icomp.dict_constituents_mediators[ifund].E
+                                                                      + ifund.E - new_jet.E)
+                        print("Created: " , new_jet )
+                    else :
+                        # only take enough energy from the spring to create the meson, with the same momentum as
+                        # the quark that created the meson
+                        new_meson = Composite( name = "Meson::Uncollidable" ,
                                            pos = ifund.r3,
                                            energy = sqrt(ifund.p3mag**2 + const.MESON_MASS**2),
                                            direction = ifund.dir
                                          )
-                    self.composites.append(new_meson)
-                    print("Created: " , new_meson )
+                        self.composites.append(new_meson)
+                        # update the mediator to preserve energy
+                        icomp.dict_constituents_mediators[ifund].E = (icomp.dict_constituents_mediators[ifund].E
+                                                                      + ifund.E - new_meson.E)
+                        print("Created: " , new_meson )
 
-                    # update the mediator to preserve energy
-                    icomp.dict_constituents_mediators[ifund].E = ( icomp.dict_constituents_mediators[ifund].E
-                                                                    + ifund.E - new_meson.E )
-
+                    print("So now mediator is: ", icomp.dict_constituents_mediators[ifund])
                     # delete the progenitor quark from the proton's list of constituents
-                    print(len(icomp.constituents),len(icomp.billiards))
                     icomp.safe_remove( ifund )
-                    print(len(icomp.constituents), len(icomp.billiards))
-
-                    # update self momentum
+                    # update composite momentum
                     icomp.recalculate_composite_properties()
 
     """
@@ -385,6 +421,28 @@ class System:
                 best_dist_sqr = test_dist_sqr
         return new_nearest
 
+    def nearest_composites_to(self, composite):
+        nearest_list = []  # returns a list headed by the nearest composite
+        best_dist_sqr = 1000
+        for icomp in self.composites :
+            test_dist_sqr = (icomp.r3-composite.r3).mag2
+            if 0.01 < test_dist_sqr < best_dist_sqr :
+                nearest_list.insert(0,icomp)
+                best_dist_sqr = test_dist_sqr
+            else :
+                nearest_list.append(icomp)
+        return nearest_list
+
+    def furthest_from(self, composite):
+        new_furthest = composite
+        best_dist_sqr = 0
+        for icomp in self.composites :
+            test_dist_sqr = (icomp.r3-composite.r3).mag2
+            if test_dist_sqr > best_dist_sqr :
+                new_furthest = icomp
+                best_dist_sqr = test_dist_sqr
+        return new_furthest
+
     def return_composites_to_mass_shell(self):
 
         """
@@ -393,7 +451,7 @@ class System:
         The idea is to subtract energy-momentum δ from the off-shell composite P*, which gets added to
         the nearest neighbour K of the off-shell. We want to maintain the mass of the nearest neighbour,
         so K = K' + delta obeys delta^2 = -2 K.δ This means that δ is spacelike. Also means Eδ < |vecδ|
-        so we can use R = Eδ/|vecδ| as a perturbative parameter
+        so we can use R = Eδ/|vecδ| as a perturbative parameter (which is often VERY good)
         -
         If vecδ is orthogonal to vecK, then we get a nice equation Eδ = sqrt(EK^2 + vecδ^2) - EK (exactness required)
         Then since P* - delta = P, P^2 = P*^2 -2 Eδ(E* + EK) + 2 vecP* . vecδ .
@@ -411,7 +469,7 @@ class System:
         Simply replace the composite with a jet, which has already been handled
         """
 
-        wiggle_room_factor_low = 0.98
+        wiggle_room_factor_low = 0.995
         wiggle_room_factor_high = 1.05
 
         # composites need to end up on-shell at the end of the experiment
@@ -422,46 +480,49 @@ class System:
                 icomp.offshell_counter += 1
                 if icomp.offshell_counter > 100 :
 
-                    print("\nStealing energy for ",icomp,"since", icomp.M ,"<",correct_mass*wiggle_room_factor_low)
+                    print(f"\nStealing energy for (({icomp})) since {icomp.M} < {correct_mass*wiggle_room_factor_low}")
 
-                    nearest = self.nearest_composite_to(icomp)
-                    # go to CoM frame of (icomp and nearest)
-                    transverse_dir = Vec3.random_dir_2D_around( nearest.p3 )
-                    while transverse_dir*icomp.p3 < 0 :
-                        transverse_dir = Vec3.random_dir_2D_around(nearest.p3)
+                    # nearest = self.nearest_composite_to(icomp)
+                    nearest_list = self.nearest_composites_to(icomp)
+                    delta = Mom4()
+                    for nearest in nearest_list :
 
-                    Delta = correct_mass**2 - icomp.M**2
-                    pT = icomp.p3*transverse_dir
-                    # this is not an exact method but under repeated iteration it will move towards onshellness
-                    mag_transverse = ( Delta**2/(2*pT) )*( 1 + Delta**2*(icomp.E + nearest.E)/(4*pT**2*nearest.E))
-                    delta = Mom4( sqrt(nearest.E**2 + mag_transverse**2) - nearest.E,
-                                  transverse_dir.x*mag_transverse,
-                                  transverse_dir.y * mag_transverse,
-                                  transverse_dir.z * mag_transverse,
-                                  )
+                        if nearest is self :
+                            print("Nope...")
+                            continue
+                        # go to CoM frame of (icomp and nearest)
+                        transverse_dir = Vec3.random_dir_2D_around( nearest.p3 )
+                        while transverse_dir*icomp.p3 < 0 :
+                            transverse_dir = Vec3.random_dir_2D_around(nearest.p3)
 
-                    if (icomp.p - delta)*(icomp.p - delta) < 0 :
-                        print(f"{(icomp.p - delta)*(icomp.p - delta)} < 0 : ABORTING")
+                        Delta = correct_mass**2 - icomp.M**2
+                        pT = icomp.p3*transverse_dir
+                        try:
+                            # this is not an exact method but under repeated iteration it will move towards onshellness
+                            mag_transverse = (Delta/(2*pT))*( 1 + Delta*(icomp.E + nearest.E)/(4*pT**2*nearest.E) )
+                        except ZeroDivisionError :
+                            print(f"{pT=} and {nearest.E=}")
+                            continue
+                        delta = Mom4( sqrt(nearest.E**2 + mag_transverse**2) - nearest.E,
+                                      transverse_dir.x*mag_transverse,
+                                      transverse_dir.y*mag_transverse,
+                                      transverse_dir.z*mag_transverse,
+                                      )
+
+                        new_comp_momentum = (icomp.p - delta)
+                        if new_comp_momentum.M2 < icomp.M2:
+                            print(f"{(icomp.p - delta)*(icomp.p - delta)} < {icomp.M2} : trying next")
+                            continue
+                        break
+
+                    if new_comp_momentum.M2 < icomp.M2:
+                        print(f"{(icomp.p - delta) * (icomp.p - delta)} < {icomp.M2} : ABORTING")
                         continue
-
-                    print(f"Giving 4-mom {delta} to {nearest}")
-                    nearest.E += delta.E
-                    print(f"so now {nearest}")
-
-                    print(f"Subtracting 4-mom {delta} from {icomp}'s {icomp.constituents[-1]}")
-                    icomp.constituents[-1].p = icomp.constituents[-1].p - delta
-
-                    icomp.recalculate_composite_properties()
-                    nearest.recalculate_composite_properties()
-
-                    # energy_to_steal = sqrt( correct_mass**2 + icomp.p3.mag2 ) - icomp.E
                     # need to steal energy from a nearby composite to boost up the mass
                     # picture a pion exchanging momentum
-                    # should be a while(notpossible) loop here
+                    nearest.absorb_momentum(delta)
+                    icomp.absorb_momentum(-delta)
 
-                    # icomp.E += energy_to_steal
-                    # nearest.E -= energy_to_steal
-                    # print("Stole",energy_to_steal,"so now ",icomp,nearest)
             # awkward stage where a meson above its mass-shell but it can't decay to another meson
             elif icomp.name[0:5] == "Meson" and wiggle_room_factor_high*const.MESON_MASS < icomp.M < 2*const.MESON_MASS :
                 raise NotImplementedError
@@ -476,12 +537,12 @@ class System:
                 icomp.E -= energy_to_lose
                 nearest.E += energy_to_lose
                 print("Lost",energy_to_lose,"so now ",icomp,nearest)
+                # should also have one for icomp.M > proton_mass + 2*meson_mass
             elif icomp.M > correct_mass*wiggle_room_factor_high :
                 # need to begin decaying to lower-mass hadronic states
                 icomp.offshell_counter += 1
                 if icomp.offshell_counter > 200 :  # time or position would be better
                     print(f"\nOffshell {icomp} so now decaying")
-                    print(f"{len(scene.objects)} and {scene.objects}")
                     # generate a hadron jet from the off-shell composite
                     new_jet = Fundamental( name="Jet",
                                            pos = icomp.r3,
