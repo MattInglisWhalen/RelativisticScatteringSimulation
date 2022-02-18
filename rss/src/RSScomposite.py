@@ -95,29 +95,31 @@ class Composite:
         # create the constituents with random energy fractions of the total
         # and set them in motion in random radial directions in composite frame
 
-        cutoffFraction = 0.05
-        energyLeft = totalEnergy = self.M
+        totalEnergy = sqrt( self._p*self._p )  # it's important that this isn't self.M
+        energyLeft = totalEnergy - self.net_mass
+
+        print(f"Need to create quarks to get rid of {energyLeft=}")
+
+        target_cutoff_fraction = 0.05
+        min_cutoff_fraction = (2*const.QUARK_MASS+0.001)/totalEnergy
 
         fail_counter = 0
-
         # do the creation of fundamentals in the composite's rest frame
-        while energyLeft > cutoffFraction * totalEnergy:
-
-            # generate energetic emission from uniform distribution of energy left
-            # energy_draw = energyLeft * random()
-
+        while energyLeft > target_cutoff_fraction * totalEnergy:
             if fail_counter > 9998 :
                 break
 
             # generate energetic emission from Sudakov (lognormal) distribution of energy left
             peak_energy = energyLeft / totalEnergy * np.e / 20  # Mode = 1/20, mean ~ 1/5
             energy_draw = energyLeft * np.random.lognormal(np.log(peak_energy), 1)
-            if 2 * energy_draw > energyLeft:
+            # if 2 * energy_draw > energyLeft:
+            #     fail_counter += 1
+            #     continue
+            if energyLeft - 2*energy_draw < min_cutoff_fraction*totalEnergy :
                 fail_counter += 1
                 continue
 
             random_dir = Vec3.random_dir()
-
             fundamental_to_add1 = Fundamental( name="Quark",
                                                energy=energy_draw,
                                                direction=random_dir)
@@ -128,8 +130,7 @@ class Composite:
                                                energy=energy_draw,
                                                direction=-random_dir)
 
-            self.constituents.append(fundamental_to_add1)
-            self.constituents.append(fundamental_to_add2)
+            self.constituents.extend( [fundamental_to_add1, fundamental_to_add2] )
 
             # add the mediators
             mediator_to_add1 = Mediator()
@@ -142,16 +143,70 @@ class Composite:
 
         print(fail_counter+1 , " tries to create " , self.name , "'s constituents ")
 
-        # finish by creating a fundamental with the remaining energy
-        final_fundamental_to_add = Fundamental( name="Core", energy=energyLeft, mass=energyLeft)
-        self.constituents.append( final_fundamental_to_add )
+        if self.name == "CoreCompositeModel" :
+            # finish by creating a fundamental with the remaining energy
+            final_fundamental_to_add = Fundamental( name="Core", energy=energyLeft, mass=energyLeft)
+            self.constituents.append( final_fundamental_to_add )
 
-        # add its mediator
-        final_mediator_to_add = Mediator()
-        self.mediators.append( final_mediator_to_add )
-        self.dict_constituents_mediators[final_fundamental_to_add] = final_mediator_to_add
+            # add its mediator
+            final_mediator_to_add = Mediator()
+            self.mediators.append( final_mediator_to_add )
+            self.dict_constituents_mediators[final_fundamental_to_add] = final_mediator_to_add
+        else :
+            # time to get rid of the childish core concept
+            random_dir = Vec3.random_dir()
+            remnant1 = Fundamental( name="Quark", energy=energyLeft/2, direction= random_dir )
+            remnant2 = Fundamental( name="Quark", energy=energyLeft/2, direction=-random_dir )
+            self.constituents.extend( [remnant1,remnant2] )
+            if remnant1.name == "Tachyon" :
+                print(f"I don't understand why this is spacelike: {energyLeft/2}")
+                raise ValueError
+
+            mediator_to_add1 = Mediator()
+            mediator_to_add2 = Mediator()
+            self.mediators.extend( [ mediator_to_add1 , mediator_to_add2 ] )
+            self.dict_constituents_mediators[ remnant1 ] = mediator_to_add1
+            self.dict_constituents_mediators[ remnant2 ] = mediator_to_add2
 
         self.N = len(self.constituents)
+
+    def absorb_momentum(self, p4):
+
+        print(f"\n >< Absorbing {p4} into {self} \n to get {p4+self.p=}")
+
+        seed_mom = Mom4(p4.E,p4.px,p4.py,p4.pz)  # deep copy
+        while seed_mom.M2 < (2*const.QUARK_MASS)**2 or seed_mom.E < 0:
+            # have to remove some quarks to provide enough mass-energy to create 2 quarks
+            seed_mom +=  self.constituents[-1].p
+            self.safe_remove( self.constituents[-1] )
+
+        print(f"{seed_mom=} + {self.net_mom=} = {seed_mom+self.net_mom} so mass will be {(seed_mom+self.net_mom).M}")
+
+        rand_dir = Vec3.random_dir()
+        new_quark1 = Fundamental( name = "Quark",
+                                  pos = self.r3,
+                                  energy = seed_mom.M/2,
+                                  direction = rand_dir
+                                  )
+        new_quark2 = Fundamental( name = "Quark",
+                                  pos = self.r3,
+                                  energy = seed_mom.M/2,
+                                  direction = -rand_dir
+                                  )
+
+        new_quark1.boost_away_with_momentum(seed_mom)
+        new_quark2.boost_away_with_momentum(seed_mom)
+        self.constituents.extend( [new_quark1,new_quark2] )
+
+        mediator_to_add1 = Mediator()
+        mediator_to_add2 = Mediator()
+        self.mediators.extend([mediator_to_add1, mediator_to_add2])
+        self.dict_constituents_mediators[new_quark1] = mediator_to_add1
+        self.dict_constituents_mediators[new_quark2] = mediator_to_add2
+
+        self.recalculate_composite_properties()
+        print(f"Ending absorption ><")
+
 
     def translate_constituents_to_lab_frame(self):
         for particle in self.constituents:
@@ -227,11 +282,11 @@ class Composite:
     def E(self, momE):
         print("You're manually setting energy=",momE,"for",self.name,". This changes the 3-momentum from",self.p3)
         self.boost_constituents_to_rest_frame()
-        new_p3mag = momE**2 - self.M**2
-        try:
-            new_p3mag = sqrt( momE**2 - self.M**2 )
-        except ValueError :
-            print("{}^2 - {}^2 < 0 : Cannot find new 3-momentum for {}".format( momE, self.M, self))
+        new_p3mag = sqrt(momE**2 - self.M**2)
+        # try:
+        #     new_p3mag = sqrt( momE**2 - self.M**2 )
+        # except ValueError :
+        #     print("{}^2 - {}^2 < 0 : Cannot find new 3-momentum for {}".format( momE, self.M, self))
         self._p = Mom4(momE, self.dir.x*new_p3mag, self.dir.y*new_p3mag, self.dir.z*new_p3mag)
         self.boost_constituents_to_lab_frame()
         print("\t\t\t\t\t to",self.p3)
@@ -387,7 +442,8 @@ class Composite:
         remnant_virtuality = (self.M**2 + const.MESON_MASS**2
                               - 2*(self.p.E*possible_meson_energy - self.p3*possible_meson_p3)
                               )
-        if -mediator.E > min_mediator_energy and remnant_virtuality > 4*const.MESON_MASS**2 :
+        if ( (-mediator.E > min_mediator_energy and remnant_virtuality > 4*const.MESON_MASS**2)
+                or (remnant_virtuality > (2*const.PROTON_MASS)**2 ) ) :
             print("\nBREAKING STRINGS!")
             print("Remnant mass predicted to be",sqrt(remnant_virtuality))
             return True
@@ -428,6 +484,8 @@ class Composite:
             self._M = sqrt(p_prime*p_prime)
         except ValueError:
             print( "{} <= 0: no mass for spacelike {} in {}".format(p_prime*p_prime,p_prime,self) )
+
+        self._r3 = self.net_pos  # TODO: this might break things
 
         self.N = len(self.constituents)
         print("So after recalculating:",self)

@@ -50,10 +50,19 @@ class Mediator(object):
 
     @property
     def M(self):
-        return np.sqrt( self.M2 )
+        return sqrt( self.M2 )
     @property
     def M2(self):
         return self.p*self.p
+
+    @property
+    def energy_vector(self):
+        # the energy of the mediator as a 4-momentum
+        return Mom4(self.E,0,0,0 )
+    @property
+    def potential_energy_vector(self):
+        # the potential energy associated with the mediator's particle, as a 4-momentum
+        return Mom4(-self.E,0,0,0 )
 
     def print(self):
         print(self,"\n")

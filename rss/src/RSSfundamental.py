@@ -107,12 +107,12 @@ class Fundamental(object):
     @p.setter
     def p(self, vec4):
         try:
-            print(f"Inside Mom4 setter for {self}. Careful, this changes the fundamental's mass to {sqrt(vec4 * vec4)}")
+            # print(f"Inside Mom4 setter for {self}. Careful, this changes the fundamental's mass!")
             self._M = sqrt(vec4*vec4)
         except ValueError:
             print(vec4*vec4,"<= 0 : Cannot set mass for",self,"with",vec4)
         self._p = vec4
-        print(f"So now we have set {self}")
+        # print(f"So now we have set {self}")
     @property
     def E(self):
         return self.p.E
@@ -209,8 +209,11 @@ class Fundamental(object):
     Collision handling
     """
     def collidable_with(self,other):
-        collidable_list = ["Lepto","Quark"]
-        if self.name[0:5] in collidable_list and other.name[0:5] in collidable_list :
+        collidable_list = ["Lepton","Quark","Core"]
+        # have to include the core in the list of collidables or the
+        # truth-level PDF will not agree with the DIS-measured PDF
+        if self.name in collidable_list and other.name in collidable_list :
+            # only look at first few letters of .name if you want to enable scattering of meson constituents
             return True
         return False
     def are_collided(self, other ):
@@ -227,6 +230,9 @@ class Fundamental(object):
 
     def do_billiards_collision_with(self,other):
 
+        # if random() < 1/4 :
+        #    return
+
         print("In fundamental billiards method,", self.p ,"+",other.p,"=",self.p+other.p)
         print("Positions are",self.r3,"and",other.r3)
         # scattered fundamentals are coloured blue
@@ -242,7 +248,7 @@ class Fundamental(object):
         boosted_self_p = self.p.boosted_to_rest_frame_of( CoM_mom )
         boosted_other_p = other.p.boosted_to_rest_frame_of( CoM_mom )
 
-        print("Boosted p3s are", boosted_self_p.p3 ,"+",boosted_other_p.p3,"=", boosted_self_p.p3+boosted_other_p.p3)
+        print("Boosted p4s are", boosted_self_p ,"+",boosted_other_p,"=", boosted_self_p+boosted_other_p)
 
         boosted_self_p3 = boosted_self_p.p3
         boosted_other_p3 = boosted_other_p.p3
@@ -278,7 +284,8 @@ class Fundamental(object):
         print(E_self_after,"^2 + ",normal_self_p3mag,"^2 compared with", E_self_before, "^2")
         normal_self_p3mag_after = -normal_self_p3mag
         try :
-            normal_self_p3mag_after *= sqrt( 1 + (E_self_after**2 - E_self_before**2) / normal_self_p3mag**2  )
+            # normal_self_p3mag_after *= sqrt( 1 + (E_self_after**2 - E_self_before**2) / normal_self_p3mag**2  )
+            normal_self_p3mag_after *= sqrt(1 + (E_self_before**2 - E_self_after**2) / normal_self_p3mag**2)
         except ZeroDivisionError:
             pass
         p3dir_self = (tang_self_p3 + normal_self_p3mag_after*normal_vec3).hat
@@ -289,7 +296,8 @@ class Fundamental(object):
         print(E_other_after,"^2 + ",normal_other_p3mag,"^2 compared with", E_other_before, "^2")
         normal_other_p3mag_after = -normal_other_p3mag
         try :
-            normal_other_p3mag_after *= sqrt( 1 + (E_other_after**2 - E_other_before**2) / normal_other_p3mag**2  )
+            # normal_other_p3mag_after *= sqrt( 1 + (E_other_after**2 - E_other_before**2) / normal_other_p3mag**2  )
+            normal_other_p3mag_after *= sqrt(1 + (E_other_before**2 - E_other_after**2) / normal_other_p3mag**2)
         except ZeroDivisionError:
             pass
 
@@ -309,7 +317,9 @@ class Fundamental(object):
 
         print("End fundamental billiards method,",  boosted_self_p_after.boosted_away_with_momentum( CoM_mom ),"+",
                                                     boosted_other_p_after.boosted_away_with_momentum( CoM_mom ),"=",
-              boosted_self_p_after.boosted_away_with_momentum( CoM_mom ) + boosted_other_p_after.boosted_away_with_momentum( CoM_mom ))
+                                                    ( boosted_self_p_after.boosted_away_with_momentum( CoM_mom )
+                                                    + boosted_other_p_after.boosted_away_with_momentum( CoM_mom ) )
+             )
 
         # boost back to lab frame
         self._p = boosted_self_p_after.boosted_away_with_momentum( CoM_mom )
@@ -337,7 +347,7 @@ class Fundamental(object):
         # Now handle collision logic
         assert(self.name != "Virtual")
 
-        elastic_probability = 0.5
+        elastic_probability = 0.9
         """ Probability any collision will simply be elastic.
             Conversely, the remaining probability is for the pair to become a virtual particle """
 
@@ -345,7 +355,8 @@ class Fundamental(object):
         annihilation_pair = []
         billiard_pair = []
         for other in collisions:
-            if random() < elastic_probability or (self.p + other.p)*(self.p + other.p) < 4*const.LEPTON_MASS**2 :
+            if ( random() < elastic_probability or (self.p + other.p)*(self.p + other.p) < 4*const.LEPTON_MASS**2
+                    or self.name[0:5] != other.name[0:5] ) :  # only the same types can annihilate
                 # elastic, or not enough energy to create a virtual, so do a billiards collision
                 print("Scattered",self , " and " , other)
                 self.name = "Billiard"
