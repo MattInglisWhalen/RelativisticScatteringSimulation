@@ -1,5 +1,10 @@
 
+# default libs
+from math import sqrt, exp
+from random import random
+
 # external libs
+from vpython import color, sphere, cone
 from vpython import *
 
 # Internal classes

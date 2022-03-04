@@ -1,5 +1,10 @@
 
+# default libs
+from random import random
+from math import sqrt, floor
+
 # external libs
+from vpython import rate
 from vpython import *
 
 # internal classes
@@ -555,9 +560,8 @@ class System:
             # end if
         # end for
 
-    def simulate_for(self, seconds=10):
+    def simulate_for(self, seconds=10, frames_per_second = 30):
 
-        frames_per_second = 30
         dt_of_frame = 0.01
 
         for iframe in range(0, floor(frames_per_second * seconds)):

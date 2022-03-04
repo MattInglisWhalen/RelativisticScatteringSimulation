@@ -1,5 +1,6 @@
 
 from rss.src.RSSvectors import *
+from math import sqrt
 
 """ The point of this object is to handle the energy and momentum stored in a spring connecting
     one Fundamental with another point in space. Composite should have a list of Mediators, and

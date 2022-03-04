@@ -1,5 +1,8 @@
 
-# local classes
+# external libs
+import numpy as np
+
+# internal classes
 from rss.src.RSSmeasurement_suite import *
 
 
@@ -7,6 +10,14 @@ def measure_truth_PDFs():
 
     suite = MeasurementSuite()
     suite.create_table_named("truths")
+
+    rows = np.array(suite.sql.get_all_rows_from_truths_table())
+    NTOT = len(rows)
+    print(f"{NTOT} rows so far in DIS table")
+    for idx in reversed(range(NTOT)) :
+        print(rows[idx])
+        if idx < NTOT - 5 :
+            break
 
     num_trials = 1
     show_plots = True
