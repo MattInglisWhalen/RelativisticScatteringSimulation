@@ -1,11 +1,13 @@
 
-from vpython import *
-
+# default libs
+from math import sqrt
 from os.path import dirname, abspath
 
 # external libraries
 import matplotlib.pyplot as plt
 import numpy as np
+from vpython import scene, vector, color, cylinder
+from vpython import *
 
 # internal classes
 from rss.src.RSSsql import Squirrel
@@ -43,13 +45,15 @@ class MeasurementSuite:
     def sql(self):
         return self._sql
 
-    def delete_table_named(self, table):
-        self.sql.delete_table_named(table)
-
     def create_table_named(self, table):
-        self.sql.create_table_named(table)
+        if table == "truths" :
+            self.sql.create_truths_table()
+        elif table == "dis" :
+            self.sql.create_dis_table()
+        else :
+            raise NotImplementedError
 
-    def measure_parton_momenta_from_DIS_at_energy(self, energy, show_new_data = True, updates_database = False) :
+    def measure_parton_momenta_from_DIS_at_energy(self, energy, updates_database = True) :
 
         scene.forward = vector(1, 0, 0)
         # Visualization settings
@@ -63,13 +67,19 @@ class MeasurementSuite:
 
         # Simulation settings
         thermalization_energy = 2.01
-        thermalization_time = 10
-        CoM_energy = 100
-        collision_time = 10
+        timestep_per_frame = 0.01
+
+        # visualization options
+        fps = 30
+        thermalization_frames = fps*10
+        thermalization_time = thermalization_frames*timestep_per_frame
+
+        CoM_energy = energy
+        collision_time = 3
 
         scattering_system = System(mode="lepton-proton", initial_energy=thermalization_energy)
         hide_vpython_residuals(scene)
-        scattering_system.simulate_for(seconds=thermalization_time)
+        scattering_system.simulate_for(seconds=thermalization_frames/fps, frames_per_second=fps)
 
         scattering_system.boost_to_collision_energy(CoM_energy)
         lepton_p_before = scattering_system.fundamentals[0].p
@@ -88,14 +98,23 @@ class MeasurementSuite:
         """
 
         measured_nu = (mom_transfer*proton_p_before)/const.PROTON_MASS
+        if measured_nu == 0 :
+            return
         measured_Qsqr = -mom_transfer*mom_transfer
         measured_x = measured_Qsqr/(2*const.PROTON_MASS*measured_nu)
         measured_y = (mom_transfer*proton_p_before)/(lepton_p_before*proton_p_before)
         measured_Wsqr = const.PROTON_MASS**2 + 2*const.PROTON_MASS*measured_nu - measured_Qsqr
-        derived_jet_mass = sqrt(measured_Qsqr*(1-measured_x)/measured_x)
+
+        measured_final_proton_mass = scattering_system.composites[0].M
+        measured_final_jet_mass = (scattering_system.net_mom() - scattering_system.composites[0].p
+                                   - scattering_system.fundamentals[0].p).M
 
         print(f"Q^2: {measured_Qsqr}\nnu: {measured_nu}\nx: {measured_x}\ny: {measured_y}\n"
-              + f"W^2: {measured_Wsqr}\nM_J^2: {derived_jet_mass}")
+              + f"W^2: {measured_Wsqr}\nM_P^2: {measured_final_proton_mass}\nM_J^2: {measured_final_jet_mass}")
+
+        if updates_database:
+            self.sql.add_row_to_dis_table(CoM_energy,thermalization_time,measured_Qsqr,measured_nu,
+                                          measured_x,measured_y,measured_final_proton_mass,measured_final_jet_mass)
 
 
 
@@ -113,7 +132,8 @@ class MeasurementSuite:
         timestep_per_frame = 0.01
 
         # visualization options
-        thermalization_frames = 60
+        frames_per_second = 30
+        thermalization_frames = frames_per_second*2
         thermalization_time = thermalization_frames*timestep_per_frame
 
         protons = []
@@ -164,9 +184,9 @@ class MeasurementSuite:
                 lc_fraction_plus.append(  ifund.p.pp/iproton.p.pp )
 
         if updates_database:
-            self.sql.add_rows_to_database(proton_energies, thermalization_times,
-                                            energies, px, py, pz,
-                                            lc_fraction_minus, lc_fraction_plus)
+            self.sql.add_rows_to_truths_table(proton_energies, thermalization_times,
+                                              energies, px, py, pz,
+                                              lc_fraction_minus, lc_fraction_plus)
 
         # show in GUI
         if show_new_data:
@@ -186,7 +206,7 @@ class MeasurementSuite:
 
     def update_all_plots(self):
 
-        rows = np.array(self.sql.get_all_rows_from_truths())
+        rows = np.array(self.sql.get_all_rows_from_truths_table())
         NTOT = len(rows)
         print(f"{NTOT} rows collected")
         for irow in rows[0:5] :

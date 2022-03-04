@@ -1,5 +1,6 @@
 
 # external libs
+from vpython import scene, color, cylinder, vector
 from vpython import *
 
 # internal classes
@@ -29,7 +30,6 @@ def lepton_lepton_collision():
     scattering_system.simulate_for( seconds = collision_time )
 
     print("Done!")
-    sleep(1)
     scene.delete()
     print("Exiting...")
 

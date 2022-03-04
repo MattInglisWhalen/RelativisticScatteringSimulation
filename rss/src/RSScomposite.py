@@ -1,4 +1,7 @@
 
+# default libs
+from math import sqrt
+
 # external libs
 import numpy as np
 
@@ -29,7 +32,7 @@ class Composite:
                  pos=Vec3(0, 0, 0),
                  energy=1,
                  direction=Vec3(0, 0, 1),
-                 mass=1):
+                 mass=1.):
 
         self.name = name
 

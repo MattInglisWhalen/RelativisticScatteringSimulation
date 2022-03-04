@@ -1,4 +1,7 @@
 
+# external libs
+from vpython import color, scene, cylinder, vector
+
 # internal classes
 from rss.src.RSSsystem import System
 from rss.src.RSSfundamental import *
@@ -33,7 +36,6 @@ def proton_proton_collision():
     scattering_system.print()
 
     print("Done!")
-    sleep(1)
     # scene.delete()
     print("Exiting...")
 
